@@ -417,7 +417,7 @@ class SimpleModelViewProjectionShaderProgram:
 
 
 class SimpleTextureModelViewProjectionShaderProgram:
-
+    
     def __init__(self):
 
         vertex_shader = """
