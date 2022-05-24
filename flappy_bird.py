@@ -16,7 +16,7 @@ import numpy as np
 
 from model import *
 from controller import Controller
-from utils import draw_image, create_skybox, create_floor
+from utils import draw_image
 
 """ 
 TODO:
@@ -53,13 +53,16 @@ if __name__ == '__main__':
 
     # A shader program that implements transformations
     textureShaderProgram = es.SimpleTextureModelViewProjectionShaderProgram()
+    simpleShaderProgram = es.SimpleModelViewProjectionShaderProgram()
     # Shader program for lights
     textureLightShaderProgram = ls.SimpleTexturePhongShaderProgram()  
+    lightShaderProgram = ls.SimplePhongShaderProgram()
+    simpleShader = es.SimpleTransformShaderProgram()
     # A shader programs for text
     #textPipeline = tx.TextureTextRendererShaderProgram()
 
     # Setting up the clear screen color
-    glClearColor(0.85, 0.85, 0.85, 1.0)
+    glClearColor(0.133, 0.194, 0.205, 1.0)
 
     # As we work in 3D, we need to check which part is in front,
     # and which one is at the back
@@ -71,15 +74,16 @@ if __name__ == '__main__':
 
 
     # create skybox
-    skybox = create_skybox(textureShaderProgram)
+    background = create_skybox(textureShaderProgram)
     floor = create_floor(textureShaderProgram)
+    sky = create_sky(textureShaderProgram)
     # create objects
-    # flappy_bird = FlappyBird(textureLightShaderProgram)
-    # tubeCreator = TubeCreator(n_tubes) # le doy el pipeline al momento de añadir un "tube" (create_tube(pipeline))
+    flappy_bird = FlappyBird(lightShaderProgram)
+    tubeCreator = TubeCreator(n_tubes) # le doy el pipeline al momento de añadir un "tube" (create_tube(pipeline))
     # background = Background(textureLightShaderProgram) # create object to apply the transformation
 
-    # controller.set_flappy_bird(flappy_bird)
-    # controller.set_tube_creator(tubeCreator)
+    controller.set_flappy_bird(flappy_bird)
+    controller.set_tube_creator(tubeCreator)
 
     ### TEXT
     # # Creating texture with all characters
@@ -87,7 +91,7 @@ if __name__ == '__main__':
     # # Moving texture to GPU memory
     # gpuText3DTexture = tx.toOpenGLTexture(textBitsTexture)
 
-    projection = tr.perspective(60, float(controller.width)/float(controller.height), 0.1, 100)
+    #projection = tr.perspective(90, float(controller.width)/float(controller.height), 0.1, 100)
     
     # glfw will swap buffers as soon as possible
     glfw.swap_interval(0) # TODO: buscar por qué
@@ -131,50 +135,49 @@ if __name__ == '__main__':
         # create tubes with a distance between them
         if(dx > 2):
             #print("create tube c1: ", ci)
-            #tubeCreator.create_tube(textureLightShaderProgram)
+            tubeCreator.create_tube(lightShaderProgram)
             c0 = t1
         
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         # # update position
-        # tubeCreator.update(dt)
-        # flappy_bird.update(dt)
+        tubeCreator.update(dt)
+        flappy_bird.update(dt)
         # background.update(dt)
 
         # check if flappy collide with a tube
         # flappy_bird.game_lost(tubeCreator)
         if True: #flappy_bird.alive:
-            # view
-            at_x = controller.eye[0] + np.cos(controller.camera_theta)
-            at_y = controller.eye[1] + np.sin(controller.camera_theta)
-            controller.at = np.array([at_x, at_y, controller.at[2]])
-            print("theta: ", at_x, at_y)
 
             view = tr.lookAt(controller.eye, controller.at, controller.up)
-            print(view)
 
             ###########################################################################
             ##### DRAW THE BACKGROUND
-            # skybox
+            
+            #textureLightShaderProgram.set_light_attributes()
+
             # Telling OpenGL to use our shader program
-            # glUseProgram(textureLightShaderProgram.shaderProgram)
-            # glUniformMatrix4fv(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
-            # glUniformMatrix4fv(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
-            # #textureLightShaderProgram.set_light_attributes()
-            # sg.drawSceneGraphNode(skybox, textureLightShaderProgram, "model")
-
-            # Drawing dice (with texture, another shader program)
             glUseProgram(textureShaderProgram.shaderProgram)
-            glUniformMatrix4fv(glGetUniformLocation(textureShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, projection)
+            glUniformMatrix4fv(glGetUniformLocation(textureShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
             glUniformMatrix4fv(glGetUniformLocation(textureShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
-
-            sg.drawSceneGraphNode(skybox, textureShaderProgram, "model")
+            # background
+            sg.drawSceneGraphNode(background, textureShaderProgram, "model")
+            # floor
             sg.drawSceneGraphNode(floor, textureShaderProgram, "model")
+            # sky
+            sg.drawSceneGraphNode(sky, textureShaderProgram, "model")
+            
             ##### DRAW THE MODELS
-
-
-
+            glUseProgram(lightShaderProgram.shaderProgram)
+            # tubes
+            # glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "model"), 1, GL_TRUE, flappy_transform)
+            glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
+            glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
+            # flappy 
+            tubeCreator.draw(lightShaderProgram)
+            flappy_bird.draw(lightShaderProgram)
+            
             #### DRAW THE POINTS
 
             """ 
@@ -225,7 +228,7 @@ if __name__ == '__main__':
         glfw.swap_buffers(window)
 
     # freeing GPU memory
-    gpuHeader.clear()
+    #gpuHeader.clear()
     controller.clear_gpu()
     glfw.terminate()
 

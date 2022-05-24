@@ -1,4 +1,8 @@
 # coding=utf-8
+from OpenGL.GL import GL_STATIC_DRAW
+import grafica.basic_shapes as bs
+import grafica.easy_shaders as es
+from grafica.images_path import getImagesPath
 """
 Lee .OBJ y .OFF
 
@@ -74,8 +78,15 @@ def readOBJ(filename, color):
         return bs.Shape(vertexData, indices)
 
 
+def createOBJShape(pipeline, filename, r, g, b):
+    shape = readOBJ(getImagesPath(filename), (r, g, b))
+    gpuShape = es.GPUShape().initBuffers()
+    pipeline.setupVAO(gpuShape)
+    gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)
+    return gpuShape
+
 def createOFFShape(pipeline, filename, r, g, b):
-    shape = readOFF(getAssetPath(filename), (r, g, b))
+    shape = readOFF(getImagesPath(filename), (r, g, b))
     gpuShape = es.GPUShape().initBuffers()
     pipeline.setupVAO(gpuShape)
     gpuShape.fillBuffers(shape.vertices, shape.indices, GL_STATIC_DRAW)

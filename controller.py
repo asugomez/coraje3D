@@ -17,11 +17,10 @@ class Controller():
         self.last_release = 0
         # perspective vectors
         self.camera_theta = np.pi
-        self.eye = np.array([0, 0, 0.1])  # Básicamente la posición del jugador
-        self.at = np.array([0, 1, 0.1])   # Hacia dónde ve el jugador
+        self.eye = np.array([-0.5, 0, 0.3])  # Básicamente la posición del jugador
         self.up = np.array([0, 0, 1])     # Un vector hacia arriba
-
-        self.projection = tr.perspective(60, float(width)/float(height), 0.1, 100)
+        self.at = np.array([1, 0, 0])   # Hacia dónde ve el jugador
+        self.projection = tr.perspective(45, float(self.width)/float(self.height), 0.1, 100)
 
     def set_flappy_bird(self, flappy_bird: 'FlappyBird'):
         self.flappy_bird = flappy_bird
@@ -55,26 +54,26 @@ class Controller():
         # camera behind our character, which is pointing forward.
         elif key == glfw.KEY_1 and action == glfw.PRESS:
             # set up the controller.eye and et
-            self.eye = (self.at - self.eye) * 0.05
-            self.at += (self.at - self.eye) * 0.05
-            self.camera_theta = np.pi
-            self.projection = tr.perspective(10, float(width)/float(height), 0.1, 100)
+            self.eye = np.array([-0.5, 0, 0.3])
+            self.up = np.array([0, 0, 1])
+            self.at = np.array([1, 0, 0])
+            self.projection = tr.perspective(45, float(self.width)/float(self.height), 0.1, 100)
 
         # side camera (view from the side, like 2D)
         elif key == glfw.KEY_2 and action == glfw.PRESS:
             # set up the controller.eye and et
-            self.eye = (self.at - self.eye) * 0.05
-            self.at += (self.at - self.eye) * 0.05
-            self.camera_theta = np.pi/4
-            self.projection = tr.perspective(40, float(width)/float(height), 0.1, 100)
+            self.eye = np.array([0, 0.5, 0.3])
+            self.up = np.array([0, 0, 1])
+            self.at = np.array([0, -1, 0])
+            self.projection = tr.perspective(45, float(self.width)/float(self.height), 0.1, 100)
 
         # first-person camera, what flappy bird sees
         elif key == glfw.KEY_3 and action == glfw.PRESS:
             # set up the controller.eye and et
-            self.eye = (self.at - self.eye) * 0.05
-            self.at += (self.at - self.eye) * 0.05
-            self.camera_theta = np.pi/8
-            self.projection = tr.perspective(80, float(width)/float(height), 0.1, 100)
+            self.eye = np.array([-0.3, 0, 0.3]) #[self.flappy_bird.pos_x, self.flappy_bird.pos_y, self.flappy_bird.pos_z])
+            self.up = np.array([0, 0, 1])
+            self.at = np.array([1, 0, 0.3]) # +- 0.3 mover hacia arriba
+            self.projection = tr.perspective(45, float(self.width)/float(self.height), 0.1, 100)
 
         else:
             print('Unknown key')
