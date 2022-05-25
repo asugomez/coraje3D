@@ -510,9 +510,9 @@ class SimplePhongShaderProgram:
         vertex_shader = """
             #version 330 core
 
-            layout (location = 0) in vec3 position;
-            layout (location = 1) in vec3 color;
-            layout (location = 2) in vec3 normal;
+            in vec3 position;
+            in vec3 color;
+            in vec3 normal;
 
             out vec3 fragPosition;
             out vec3 fragOriginalColor;
@@ -758,6 +758,7 @@ class SimpleTexturePhongShaderProgram:
 
         # Unbind the current VAO
         glBindVertexArray(0)
+
 
 #TAREA4: Se crea este nuevo shader para usar múltiples luces con texturas
 class MultipleLightTexturePhongShaderProgram:

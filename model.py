@@ -1,4 +1,5 @@
 #from OpenGL.GL import GL_STATIC_DRAW, GL_TRUE, GL_REPEAT, GL_NEAREST, GL_CLAMP_TO_EDGE
+# obj from https://www.turbosquid.com/
 import grafica.transformations as tr
 import grafica.basic_shapes as bs
 import grafica.scene_graph as sg
@@ -28,15 +29,15 @@ MAX_Z = 0.48
 class FlappyBird(object):
     
     def __init__(self, pipeline):
-        self.pos_x = 0.3 # initial position, constant
-        self.pos_y = 0.1 # initial position, constant
+        self.pos_x = -0.3 # initial position, constant
+        self.pos_y = 0 # initial position, constant
         self.pos_z = 0.2 # changes with gravity and user input
         self.alive = True
         self.moving = 1 # 0 down, 1 up
-        self.size_bird = 0.0003
+        self.size_bird = 0.02
         self.tubes = []
         self.win = False
-        self.gpu = obj.createOBJShape(pipeline, getImagesPath('eiffel.obj'), 1.0, 1.0, 0.0)
+        self.gpu = obj.createOBJShape(pipeline, getImagesPath('courage.obj'), 0.6, 0.3, 0.96)
         model = sg.SceneGraphNode('flappy')
         model.childs += [self.gpu]
         self.model = model
@@ -54,20 +55,21 @@ class FlappyBird(object):
         if not self.alive:
             flappy_transform = tr.matmul([
                     tr.translate(self.pos_x, self.pos_y, self.pos_z), 
-                    tr.rotationX(np.pi/4), # TODO change rotation
+                    tr.rotationY(np.pi/2), # acostado
+                    tr.rotationZ(np.pi/2),
+                    tr.rotationX(np.pi/2),
                     tr.uniformScale(self.size_bird)
                 ])
         if self.alive:
             flappy_transform = tr.matmul([
                     tr.translate(self.pos_x, self.pos_y, self.pos_z), 
+                    tr.rotationZ(np.pi/2),
                     tr.rotationX(np.pi/2),
-                    tr.uniformScale(0.00003)
+                    tr.uniformScale(self.size_bird)
                 ])
         self.model.transform = flappy_transform
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
         sg.drawSceneGraphNode(self.model, pipeline, "model")
-        #glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, flappy_transform)
-        #pipeline.drawCall(self.gpu)
 
     def move_up(self):
         if self.alive:
@@ -265,10 +267,10 @@ class Background(object):
 
 def create_skybox(pipeline):
     # código del aux 6
-    shapeSky = bs.createTextureNormalsCubeAdvanced('background.jfif', LARGO, 1)
+    shapeSky = bs.createTextureNormalsCubeAdvanced('background.jfif', LARGO, 1) #createTextureNormalsCubeAdvanced
     gpuSky = create_gpu(shapeSky, pipeline)
     gpuSky.texture = es.textureSimpleSetup(
-        getImagesPath("background.jfif"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
+        getImagesPath("pattern.jfif"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
     
     skybox = sg.SceneGraphNode("skybox")
     skybox.transform = tr.matmul([tr.translate(0, 0, 0), tr.scale(LARGO,1,1)])
@@ -278,10 +280,10 @@ def create_skybox(pipeline):
 
 def create_floor(pipeline):
     # código del aux 6
-    shapeFloor = bs.createTextureQuadWithNormal(LARGO, 1)
+    shapeFloor = bs.createTextureQuadWithNormal(LARGO, 1) #WithNormal
     gpuFloor = create_gpu(shapeFloor, pipeline)
     gpuFloor.texture = es.textureSimpleSetup(
-        getImagesPath("grass.jfif"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
+        getImagesPath("pattern.jfif"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
 
     floor = sg.SceneGraphNode("floor")
     floor.transform = tr.matmul([tr.translate(0, 0, MIN_Z),tr.scale(LARGO, 1, 1)])
@@ -294,7 +296,7 @@ def create_sky(pipeline):
     shapeFloor = bs.createTextureQuadWithNormal(LARGO, 1)
     gpuFloor = create_gpu(shapeFloor, pipeline)
     gpuFloor.texture = es.textureSimpleSetup(
-        getImagesPath("grass.jfif"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
+        getImagesPath("back.jfif"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
 
     floor = sg.SceneGraphNode("floor")
     floor.transform = tr.matmul([tr.translate(0, 0, MAX_Z),tr.scale(LARGO, 1, 1)])
