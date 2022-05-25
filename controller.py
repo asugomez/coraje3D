@@ -22,6 +22,8 @@ class Controller():
         self.at = np.array([1, 0, 0])   # Hacia dónde ve el jugador
         self.projection = tr.perspective(45, float(self.width)/float(self.height), 0.1, 100)
 
+    # todo controller property view
+
     def set_flappy_bird(self, flappy_bird: 'FlappyBird'):
         self.flappy_bird = flappy_bird
 
@@ -65,7 +67,7 @@ class Controller():
             self.eye = np.array([0, 0.5, 0.3])
             self.up = np.array([0, 0, 1])
             self.at = np.array([0, -1, 0])
-            self.projection = tr.perspective(45, float(self.width)/float(self.height), 0.1, 100)
+            self.projection = tr.perspective(80, float(self.width)/float(self.height), 0.1, 100)
 
         # first-person camera, what flappy bird sees
         elif key == glfw.KEY_3 and action == glfw.PRESS:

@@ -27,7 +27,7 @@ if __name__ == '__main__':
     # no args given
     if(len(sys.argv) == 1):
         # give a random number between 3 and 10
-        n_tubes = randint(3,10)
+        n_tubes = 10#randint(3,10)
     else:
         # user give an input
         n_tubes = int(sys.argv[1])
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         glfw.set_window_should_close(window, True)
 
     # set the controller
-    controller = Controller(width = 600, height = 600)
+    controller = Controller(width = 1000, height = 600)
 
     window = glfw.create_window(controller.width, controller.height, 'Catty Bird 3D', None, None)
 
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     simpleShaderProgram = es.SimpleModelViewProjectionShaderProgram()
     # Shader program for lights
     textureLightShaderProgram = ls.SimpleTexturePhongShaderProgram()  
-    lightShaderProgram = ls.SimplePhongShaderProgram()
+    lightShaderProgram = ls.SimpleGouraudShaderProgram()
     simpleShader = es.SimpleTransformShaderProgram()
     # A shader programs for text
     #textPipeline = tx.TextureTextRendererShaderProgram()
@@ -68,19 +68,16 @@ if __name__ == '__main__':
     # and which one is at the back
     glEnable(GL_DEPTH_TEST)
 
-       # Enabling transparencies
+    # Enabling transparencies
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-
-    # create skybox
-    background = create_skybox(textureShaderProgram)
-    floor = create_floor(textureShaderProgram)
-    sky = create_sky(textureShaderProgram)
+    background_final = Background(textureShaderProgram)
     # create objects
     flappy_bird = FlappyBird(lightShaderProgram)
     tubeCreator = TubeCreator(n_tubes) # le doy el pipeline al momento de añadir un "tube" (create_tube(pipeline))
-    # background = Background(textureLightShaderProgram) # create object to apply the transformation
+    #shape_tube_inf = bs.createColorNormalsCube(0,1,0)
+    #gpu_tube_inf = create_gpu(shape_tube_inf, lightShaderProgram)
 
     controller.set_flappy_bird(flappy_bird)
     controller.set_tube_creator(tubeCreator)
@@ -90,8 +87,6 @@ if __name__ == '__main__':
     # textBitsTexture = tx.generateTextBitsTexture()
     # # Moving texture to GPU memory
     # gpuText3DTexture = tx.toOpenGLTexture(textBitsTexture)
-
-    #projection = tr.perspective(90, float(controller.width)/float(controller.height), 0.1, 100)
     
     # glfw will swap buffers as soon as possible
     glfw.swap_interval(0) # TODO: buscar por qué
@@ -99,6 +94,11 @@ if __name__ == '__main__':
     t0 = glfw.get_time()
     c0 = 0
     t1 = glfw.get_time()
+
+    c_pos_sol_y = 20
+    pos_sol_y = c_pos_sol_y
+    c_pos_sol_z = 10
+    sol_theta = 3/2 * np.pi 
 
     # Application loop
     while not glfw.window_should_close(window):
@@ -129,6 +129,14 @@ if __name__ == '__main__':
             # Getting the time difference from the previous iteration
             dt = t1 - t0
             t0 = t1
+            if pos_sol_y >= -c_pos_sol_y:
+                pos_sol_y -= 2 * dt
+            else:
+                pos_sol_y += 2 * dt
+            
+            sol_theta += 2 * dt
+            pos_sol_z = c_pos_sol_z * np.cos(sol_theta)
+
         else: 
             dt = 0 # stop the game
 
@@ -141,68 +149,86 @@ if __name__ == '__main__':
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        # # update position
-        tubeCreator.update(dt)
+        # update position
         flappy_bird.update(dt)
-        # background.update(dt)
+        tubeCreator.update(dt)
+        background_final.update(dt)
 
         # check if flappy collide with a tube
-        # flappy_bird.game_lost(tubeCreator)
-        if True: #flappy_bird.alive:
-
+        flappy_bird.game_lost(tubeCreator)
+        if flappy_bird.alive:
             view = tr.lookAt(controller.eye, controller.at, controller.up)
-
             ###########################################################################
             ##### DRAW THE BACKGROUND
-            
-            #textureLightShaderProgram.set_light_attributes()
-
             # Telling OpenGL to use our shader program
             glUseProgram(textureShaderProgram.shaderProgram)
-            glUniformMatrix4fv(glGetUniformLocation(textureShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
             glUniformMatrix4fv(glGetUniformLocation(textureShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
+            glUniformMatrix4fv(glGetUniformLocation(textureShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
             # background
-            sg.drawSceneGraphNode(background, textureShaderProgram, "model")
-            # floor
-            sg.drawSceneGraphNode(floor, textureShaderProgram, "model")
-            # sky
-            sg.drawSceneGraphNode(sky, textureShaderProgram, "model")
-            
-            ##### DRAW THE MODELS
-            glUseProgram(lightShaderProgram.shaderProgram)
-            # tubes
-            # glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "model"), 1, GL_TRUE, flappy_transform)
-            glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
-            glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
-            # flappy 
-            tubeCreator.draw(lightShaderProgram)
-            flappy_bird.draw(lightShaderProgram)
-            
-            #### DRAW THE POINTS
-
-            """ 
-            to change the light
-            see ex_lighting.py
-            glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "La"), 0.6, 0.6, 0.6)
-            """
-            
+            background_final.draw(textureShaderProgram)
+            if(flappy_bird.points == n_tubes): # todo fix this
+                #print("WIN!!!!!")
+                flappy_bird.win = True
+                ##draw_image(textureShaderProgram,1,1,"win")
+        else:
+            glClearColor(1, 0, 0, 1.0)
+            ##draw_image(textureShaderProgram,1,1,"lose")
         
+        ###########################################################################
+        ##### DRAW THE MODELS
+        ## Tube
+        # glUseProgram(lightShaderProgram.shaderProgram)
+        # glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
+        # glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
+        # tubeCreator.draw(lightShaderProgram)
+        ## Flappy
+        glUseProgram(lightShaderProgram.shaderProgram)
+        ###########################################################################
+        #### LIGHTS
+        # Setting all uniform shader variables
 
-        # # draw the models 
-        # if flappy_bird.alive:
-        #     # Setting up the background
-        #     background.draw(textureShaderProgram)
-        #     if(flappy_bird.points == n_tubes): # todo fix this
-        #         #print("WIN!!!!!")
-        #         flappy_bird.win = True
-        #         ##draw_image(textureShaderProgram,1,1,"win")
-        # else:
-        #     glClearColor(1, 0, 0, 1.0)
-        #     ##draw_image(textureShaderProgram,1,1,"lose")
+        # White light in all components: ambient, diffuse and specular.
+        glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "La"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
+        glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
 
-        # tubeCreator.draw(textureShaderProgram)
-        # flappy_bird.draw(textureShaderProgram)
+        # Object is barely visible at only ambient. Diffuse behavior is slightly red. Sparkles are white
+        glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "Ka"), 0.2, 0.2, 0.2)
+        glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "Kd"), 0.5, 0.5, 0.5)
+        glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
 
+        glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "lightPosition"), 0, pos_sol_y, pos_sol_z)
+        glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "viewPosition"), controller.eye[0], controller.eye[1], controller.eye[2])
+        glUniform1ui(glGetUniformLocation(lightShaderProgram.shaderProgram, "shininess"), 50)
+
+        glUniform1f(glGetUniformLocation(lightShaderProgram.shaderProgram, "constantAttenuation"), 0.0001)
+        glUniform1f(glGetUniformLocation(lightShaderProgram.shaderProgram, "linearAttenuation"), 0.03)
+        glUniform1f(glGetUniformLocation(lightShaderProgram.shaderProgram, "quadraticAttenuation"), 0.01)
+
+        # tubes
+        tube_transform = tr.matmul([
+            #tr.translate(0, 0, pos_z_inf),
+            tr.uniformScale(0.25)
+        ])
+        glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
+        glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
+        tubeCreator.draw(lightShaderProgram)
+
+        # flappy
+        glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
+        glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
+        flappy_bird.draw(lightShaderProgram)
+
+        ###########################################################################
+        #### DRAW THE POINTS
+
+        """ 
+        to change the light
+        see ex_lighting.py
+        glUniform3f(glGetUniformLocation(lightingPipeline.shaderProgram, "La"), 0.6, 0.6, 0.6)
+        """
+        
+    
         ### TEXT
         
         # Telling OpenGL to use our shader program

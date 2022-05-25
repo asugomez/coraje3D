@@ -13,6 +13,10 @@ from random import random, choice
 from utils import create_gpu, modify_texture_flappy
 from grafica.images_path import getImagesPath
 
+LARGO = 1000
+MIN_Z = -0.4
+MAX_Z = 0.48
+
 ##sound
 #from playsound import playsound
 
@@ -25,14 +29,17 @@ class FlappyBird(object):
     
     def __init__(self, pipeline):
         self.pos_x = 0.3 # initial position, constant
-        self.pos_y = 0.0 # initial position, constant
+        self.pos_y = 0.1 # initial position, constant
         self.pos_z = 0.2 # changes with gravity and user input
         self.alive = True
         self.moving = 1 # 0 down, 1 up
-        self.size_bird = 0.15
+        self.size_bird = 0.0003
         self.tubes = []
         self.win = False
-        self.gpu = obj.createOBJShape(pipeline, getImagesPath('eiffel.obj'), 1.0, 0.0, 0.0)
+        self.gpu = obj.createOBJShape(pipeline, getImagesPath('eiffel.obj'), 1.0, 1.0, 0.0)
+        model = sg.SceneGraphNode('flappy')
+        model.childs += [self.gpu]
+        self.model = model
 
     @property 
     def points(self):
@@ -43,22 +50,26 @@ class FlappyBird(object):
         self.model = new_model
     
     def draw(self, pipeline):
-        # rotation = tr.identity()
-        # # dead
-        # if not self.alive:
-        #     rotation = tr.matmul([
-        #         tr.scale(-1, -1, 0)])# inverse
-        # alive
-        flappy_transform = tr.matmul([
-                tr.translate(-0.3, 0.1, self.pos_z), # change pos y when 2D
-                tr.rotationX(np.pi/2),
-                tr.uniformScale(0.00003)
-            ])
-        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, flappy_transform)
-        pipeline.drawCall(self.gpu)
+        # dead
+        if not self.alive:
+            flappy_transform = tr.matmul([
+                    tr.translate(self.pos_x, self.pos_y, self.pos_z), 
+                    tr.rotationX(np.pi/4), # TODO change rotation
+                    tr.uniformScale(self.size_bird)
+                ])
+        if self.alive:
+            flappy_transform = tr.matmul([
+                    tr.translate(self.pos_x, self.pos_y, self.pos_z), 
+                    tr.rotationX(np.pi/2),
+                    tr.uniformScale(0.00003)
+                ])
+        self.model.transform = flappy_transform
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        sg.drawSceneGraphNode(self.model, pipeline, "model")
+        #glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, flappy_transform)
+        #pipeline.drawCall(self.gpu)
 
     def move_up(self):
-        #print("move up")
         if self.alive:
             if(self.pos_z < (1 - self.size_bird/2)): 
                 dt = 0.35 #* 2
@@ -66,7 +77,6 @@ class FlappyBird(object):
             self.moving = 1
             
     def move_down(self, dt = 0.02):
-        #print("move down")
         if self.alive:
             if(self.pos_z > (-0.5 + self.size_bird/2)): 
                 #dt *= 4
@@ -82,11 +92,10 @@ class FlappyBird(object):
         update the bird tube list to indicate how many tubes the bird has passed throw
         """
         # bird axis positions
-        bird_x_left = self.pos_x - self.size_bird/2 
-        bird_x_right = self.pos_x + self.size_bird/2
-        bird_y_inf = self.pos_y - self.size_bird/2 
-        bird_y_sup = self.pos_y + self.size_bird/2 
-
+        bird_x_near = self.pos_x - self.size_bird/2 
+        bird_x_far = self.pos_x + self.size_bird/2
+        bird_y_left = self.pos_y - self.size_bird/2 
+        bird_y_right = self.pos_y + self.size_bird/2 
         bird_z_inf = self.pos_z - self.size_bird/2
         bird_z_sup = self.pos_z +self.size_bird/2
 
@@ -98,34 +107,34 @@ class FlappyBird(object):
         if self.win:
             return
 
-        if not ((bird_z_sup < 1) and (bird_z_inf > -1)):
+        # si el pájaro toca techo o suelo
+        if not ((bird_z_sup < 0.5) and (bird_z_inf > -0.5)):
             #print("ERROR")
             self.alive = False
-            self.pos_z = -1 + self.size_bird/2 # todo fix this --> que sea mas lento
+            self.pos_z = -0.5 + self.size_bird/2 # todo fix this --> que sea mas lento
             tube_creator.die()
             return
         
         tubes = tube_creator.tubes
         for i, tube in enumerate(tubes):
-            #print("tube: ", i)
             # tubes axis position
-            tube_x_left = tube.pos_x - tube.width/2
-            tube_x_right = tube.pos_x + tube.width/2
-            tube_z_inf = -1 + tube.height_inf # punto alto del tubo inf
-            tube_z_sup = 1 - tube.height_sup # punto bajo del tubo sup
+            tube_x_near = tube.pos_x - tube.width/2
+            tube_x_far = tube.pos_x + tube.width/2
+            tube_z_inf = -0.5 + tube.height_inf # punto alto del tubo inf
+            tube_z_sup = 0.5 - tube.height_sup # punto bajo del tubo sup
 
             ##### BAD ######
             # checking height: bird same height as the tube
             if((bird_z_inf < (tube_z_inf + alpha_error)) or ((bird_z_sup > (tube_z_sup - alpha_error)))):
                 # bird collide passing throw the tube
-                if((bird_x_left > tube_x_left) and (bird_x_left < tube_x_right)):
+                if((bird_x_near > tube_x_near) and (bird_x_near < tube_x_far)):
                     #print("here 1")
                     self.alive = False
                     self.pos_y = -1 + self.size_bird/2 # todo fix this --> que sea mas lento
                     tube_creator.die()
             
                 # bird collide at the begining of the tube
-                elif((bird_x_right > tube_x_left) and (bird_x_right < tube_x_right)):
+                elif((bird_x_far > tube_x_near) and (bird_x_far < tube_x_far)):
                     #print("here 2")
                     self.alive = False
                     self.pos_z = -1 + self.size_bird/2 # todo fix this --> que sea mas lento
@@ -135,67 +144,65 @@ class FlappyBird(object):
             # different height bird and tube
             else:
                 # bird passing throw the tube (at the end)
-                if((bird_x_left > tube_x_left + tube.width/2) and (bird_x_left < tube_x_right)):
+                if((bird_x_near > tube_x_near + tube.width/2) and (bird_x_near < tube_x_near)):
                     if not tube in self.tubes:
                         self.tubes.append(tube)
                         #playsound('success.mp3')
               
-
     def clear(self):
         self.model.clear()
     
-
 class Tube(object):
 
     def __init__(self, pipeline):
-        self.pos_x = 1.25
-        self.width = 0.25
-        # create tube with a random dy
-        self.height_inf = choice(np.arange(0.4, 1.2, 0.1))  # todo make it random
-        min_dz = 0.2
-        max_dz = 2 - self.height_inf - 0.4
-        self.height_sup= choice(np.arange(min_dz, max_dz, 0.1))
+        self.pos_x = 15
+        self.width = 0.4
+        # create tube with a random dz
+        self.height_inf = choice(np.arange(0.3, 0.6, 0.1)) # altura tubo inferior
+        min_distance_between_tubes = 0.3 # distancia entre tubos
+        max_dz = 1 - self.height_inf - min_distance_between_tubes
+        self.height_sup= choice(np.arange(0.1, max_dz, 0.1)) # altura tubo sup
 
         # tube model
-        shape_tube_inf = bs.createRainbowCube()
-        shape_tube_sup = bs.createRainbowCube()
+        shape_tube_inf = bs.createColorNormalsCube(0,1,0) # todo make it cilindrique
+        shape_tube_sup = bs.createColorNormalsCube(0,1,0) # todo make it cilindrique
 
         gpu_tube_inf = create_gpu(shape_tube_inf, pipeline)
         gpu_tube_sup = create_gpu(shape_tube_sup, pipeline)
 
-        #gpu_tube_inf.texture = es.textureSimpleSetup(getImagesPath("tube.png"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
-        #gpu_tube_sup.texture = es.textureSimpleSetup(getImagesPath("tube.png"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
-
         tube_inf = sg.SceneGraphNode('tube_inf')
-        pos_z = -1 + self.height_inf/2 
+        pos_z_inf = -0.5 + self.height_inf/2 
         tube_inf.transform = tr.matmul([
-            tr.translate(0, 0, pos_z),
-            tr.scale(0, self.width, self.height_inf)
+            tr.translate(0, 0, pos_z_inf),
+            tr.scale(self.width, self.width, self.height_inf)
         ])
         tube_inf.childs += [gpu_tube_inf]
 
         tube_sup = sg.SceneGraphNode('tube_sup')
-        pos_z = 1 - self.height_sup/2
+        pos_z_sup = 0.5- self.height_sup/2
         tube_sup.transform = tr.matmul([
-            tr.translate(0, 0, pos_z),
+            tr.translate(0, 0, pos_z_sup),
             tr.rotationZ(3.14), # rotation 180
-            tr.scale(0, self.width, self.height_sup)
+            tr.scale(self.width, self.width, self.height_sup)
         ])
         tube_sup.childs += [gpu_tube_sup]
 
         tube = sg.SceneGraphNode("tube")
-        tube.childs = [tube_inf, tube_sup] 
+        tube.childs += [tube_inf]
+        tube.childs += [tube_sup] 
+        #self.gpu = gpu_tube_inf
 
         self.model = tube
 
     def draw(self, pipeline):
-        tube_transform = tr.translate(self.pos_x, 0, 0)
-        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tube_transform)
-        #pipeline.drawCall(self.gpu)
+        self.model.transform = tr.translate(self.pos_x, 0, 0)
         sg.drawSceneGraphNode(self.model, pipeline, "model")
+        #glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        #pipeline.drawCall(self.gpu)
+        
 
     def update(self, dt):
-        self.pos_x -= dt * 0.5
+        self.pos_x -= dt * 7
 
     def clear(self):
         self.model.clear()
@@ -233,25 +240,23 @@ class Background(object):
     
     def __init__(self, pipeline, L = 10):
         self.night = L
-        alpha_trans = 100000
-        shape_bg = bs.createTextureQuad(alpha_trans, 1)
-        gpu_bg = create_gpu(shape_bg, pipeline)
-        gpu_bg.texture = es.textureSimpleSetup(getImagesPath("background.png"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
+        side = create_skybox(pipeline)
+        floor = create_floor(pipeline)
+        sky = create_sky(pipeline)
 
         background = sg.SceneGraphNode('background')
-        background.transform = tr.scale(alpha_trans,2, 0)
-        background.childs = [gpu_bg]
-        
-        bg_final = sg.SceneGraphNode('bg_final')
-        bg_final.childs += [background]
+        background.childs += [side]
+        background.childs += [floor]
+        background.childs += [sky]
 
         self.pos_x = 0
-        self.model = bg_final
+        self.model = background
 
 
     def draw(self, pipeline):
         self.model.transform = tr.translate(self.pos_x, 0, 0)
-        sg.drawSceneGraphNode(self.model, pipeline, 'transform')
+        glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
+        sg.drawSceneGraphNode(self.model, pipeline, "model")
 
     def update(self, dt):
         self.pos_x -= dt * 0.5
@@ -260,39 +265,39 @@ class Background(object):
 
 def create_skybox(pipeline):
     # código del aux 6
-    shapeSky = bs.createTextureCube('background.jfif')#, 1000, 1)
+    shapeSky = bs.createTextureNormalsCubeAdvanced('background.jfif', LARGO, 1)
     gpuSky = create_gpu(shapeSky, pipeline)
     gpuSky.texture = es.textureSimpleSetup(
         getImagesPath("background.jfif"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
     
     skybox = sg.SceneGraphNode("skybox")
-    skybox.transform = tr.matmul([tr.translate(0, 0, 0), tr.scale(10,1,1)])
+    skybox.transform = tr.matmul([tr.translate(0, 0, 0), tr.scale(LARGO,1,1)])
     skybox.childs += [gpuSky]
 
     return skybox
 
 def create_floor(pipeline):
     # código del aux 6
-    shapeFloor = bs.createTextureQuad(8, 8)
+    shapeFloor = bs.createTextureQuadWithNormal(LARGO, 1)
     gpuFloor = create_gpu(shapeFloor, pipeline)
     gpuFloor.texture = es.textureSimpleSetup(
         getImagesPath("grass.jfif"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
 
     floor = sg.SceneGraphNode("floor")
-    floor.transform = tr.matmul([tr.translate(0, 0, -0.27),tr.uniformScale(20)])
+    floor.transform = tr.matmul([tr.translate(0, 0, MIN_Z),tr.scale(LARGO, 1, 1)])
     floor.childs += [gpuFloor]
 
     return floor
 
 def create_sky(pipeline):
     # código del aux 6
-    shapeFloor = bs.createTextureQuad(8, 8)
+    shapeFloor = bs.createTextureQuadWithNormal(LARGO, 1)
     gpuFloor = create_gpu(shapeFloor, pipeline)
     gpuFloor.texture = es.textureSimpleSetup(
         getImagesPath("grass.jfif"), GL_REPEAT, GL_REPEAT, GL_NEAREST, GL_NEAREST)
 
     floor = sg.SceneGraphNode("floor")
-    floor.transform = tr.matmul([tr.translate(0, 0, 0.4),tr.uniformScale(20)])
+    floor.transform = tr.matmul([tr.translate(0, 0, MAX_Z),tr.scale(LARGO, 1, 1)])
     floor.childs += [gpuFloor]
 
     return floor
