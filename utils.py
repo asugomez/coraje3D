@@ -66,7 +66,7 @@ def setUpLightsDefault(pipeline):
     glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
 
     # Object is barely visible at only ambient. Bright white for diffuse and specular components.
-    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ka"), 1, 1, 1)
+    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ka"), 0.5, 0.3, 1)
     glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Kd"), 0.9, 0.9, 0.9)
     glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ks"), 1.0, 1.0, 1.0)
     

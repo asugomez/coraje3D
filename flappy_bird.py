@@ -54,6 +54,7 @@ if __name__ == '__main__':
     # Shader program for lights
     textureLightShaderProgram = ls.SimpleTexturePhongShaderProgram()
     lightShaderProgram = ls.SimplePhongShaderProgram()
+    simpleTextureShaderProgram = es.SimpleTextureTransformShaderProgram()
     # A shader programs for text
     #textPipeline = tx.TextureTextRendererShaderProgram()
 
@@ -91,7 +92,7 @@ if __name__ == '__main__':
     c0 = 0
     t1 = glfw.get_time()
 
-    c_pos_sol_y = 30
+    c_pos_sol_y = 20
     pos_sol_y = c_pos_sol_y
     c_pos_sol_z = 10
     sol_theta = 3/2 * np.pi 
@@ -125,15 +126,18 @@ if __name__ == '__main__':
             # Getting the time difference from the previous iteration
             dt = t1 - t0
             t0 = t1
+            controller.camera_theta -= dt
+            # set up the eye, at and up for first camera
+            controller.set_up_vectors()
             if pos_sol_y >= -c_pos_sol_y:
                 pos_sol_y -= 2 * dt
             else:
                 pos_sol_y += 2 * dt
-            
             sol_theta += 2 * dt
-            #pos_sol_z = c_pos_sol_z * np.cos(sol_theta)
-            pos_sol_y = 1
-            pos_sol_z = c_pos_sol_z
+            pos_sol_z = c_pos_sol_z * np.cos(sol_theta)
+            # luz siempre:
+            #pos_sol_y = 1
+            #pos_sol_z = c_pos_sol_z
 
         else: 
             dt = 0 # stop the game
@@ -174,10 +178,10 @@ if __name__ == '__main__':
             if(flappy_bird.points == n_tubes): # todo fix this
                 #print("WIN!!!!!")
                 flappy_bird.win = True
-                ##draw_image(textureShaderProgram,1,1,"win")
+                draw_image(simpleTextureShaderProgram,1,1,"win")
         else:
             glClearColor(1, 0, 0, 1.0)
-            ##draw_image(textureShaderProgram,1,1,"lose")
+            draw_image(simpleTextureShaderProgram,1,1,"lose")
         
         ###########################################################################
         ##### DRAW THE MODELS

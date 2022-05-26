@@ -159,6 +159,7 @@ class Tube(object):
     def __init__(self, pipeline):
         self.pos_x = 15
         self.width = 0.4
+        self.width_y = 1
         # create tube with a random dz
         self.height_inf = choice(np.arange(0.3, 0.6, 0.1)) # altura tubo inferior
         min_distance_between_tubes = 0.3 # distancia entre tubos
@@ -166,8 +167,8 @@ class Tube(object):
         self.height_sup= choice(np.arange(0.1, max_dz, 0.1)) # altura tubo sup
 
         # tube model
-        shape_tube_inf = bs.createColorNormalsCube(0,1,0) # todo make it cilindrique
-        shape_tube_sup = bs.createColorNormalsCube(0,1,0) # todo make it cilindrique
+        shape_tube_inf = bs.createColorNormalsCube(0,0.5,0.8) # todo make it cilindrique
+        shape_tube_sup = bs.createColorNormalsCube(0,0.5,0.8) # todo make it cilindrique
 
         gpu_tube_inf = create_gpu(shape_tube_inf, pipeline)
         gpu_tube_sup = create_gpu(shape_tube_sup, pipeline)
