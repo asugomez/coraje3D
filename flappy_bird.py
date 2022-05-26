@@ -97,6 +97,11 @@ if __name__ == '__main__':
     c_pos_sol_z = 10
     sol_theta = 3/2 * np.pi 
 
+    # TODO: pos sol y,z en funcion tiempo
+    L0 = glfw.get_time()
+    L = 10 # s
+    day_time = L/2
+
     # Application loop
     while not glfw.window_should_close(window):
 
