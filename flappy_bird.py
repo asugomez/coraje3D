@@ -176,11 +176,11 @@ if __name__ == '__main__':
             # TEXT
             # Telling OpenGL to use our shader program
             glUseProgram(textPipeline.shaderProgram)
-            write_text(textPipeline, flappy_bird.points, gpuText3DTexture, 0.4, 0.5, 0)
+            gpuHeader = write_text(textPipeline, flappy_bird.points, gpuText3DTexture, 0.4, 0.5, 0)
         else:
-            glClearColor(1, 0, 0, 1.0)
+            glClearColor(0.8, 0.2, 0, 1.0)
             glUseProgram(textPipeline.shaderProgram)
-            write_text(textPipeline, "You lose :(", gpuText3DTexture, -0.8, 0, 0)
+            gpuHeader = write_text(textPipeline, "You lose :(", gpuText3DTexture, -0.8, 0, 0)
         
 
 
@@ -189,14 +189,14 @@ if __name__ == '__main__':
         if(flappy_bird.points == n_tubes):
             flappy_bird.win = True
             glUseProgram(textPipeline.shaderProgram)
-            write_text(textPipeline, "You win!", gpuText3DTexture,-0.8, 0, 0)
+            gpuHeader = write_text(textPipeline, "You win!", gpuText3DTexture,-0.8, 0, 0)
         
         
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)
 
     # freeing GPU memory
-    #gpuHeader.clear()
+    gpuHeader.clear()
     controller.clear_gpu()
     glfw.terminate()
 

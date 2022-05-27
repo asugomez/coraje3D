@@ -319,4 +319,6 @@ def write_text(pipeline, text, gpuText3DTexture, x = 0, y = 0, z = 0):
     glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, headerTransform)
     pipeline.drawCall(gpuHeader)
 
+    return gpuHeader
+
 
