@@ -34,7 +34,7 @@ class FlappyBird(object):
         self.pos_z = 0.2 # changes with gravity and user input
         self.alive = True
         self.size_bird = 0.02
-        self.size_bird_screen = 0.18
+        self.size_bird_screen = 0.02
         self.tubes = []
         self.win = False
         self.gpu = obj.createOBJShape(pipeline, getImagesPath('courage.obj'), 0.6, 0.3, 0.96)

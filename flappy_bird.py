@@ -28,9 +28,12 @@ if __name__ == '__main__':
     if(len(sys.argv) == 1):
         # give a random number between 3 and 10
         n_tubes = 10#randint(3,10)
+        day_night_time = 20
     else:
         # user give an input
-        n_tubes = int(sys.argv[1])
+        n_tubes = int(sys.argv[1]) # N
+        day_night_time = int(sys.argv[2]) # L
+
     
     # Initialize glfw
     if not glfw.init():
@@ -39,7 +42,7 @@ if __name__ == '__main__':
     # set the controller
     controller = Controller(width = 1000, height = 600)
 
-    window = glfw.create_window(controller.width, controller.height, 'Catty Bird 3D', None, None)
+    window = glfw.create_window(controller.width, controller.height, 'Coraje corre 3D', None, None)
 
     if not window:
         glfw.terminate()
@@ -87,19 +90,20 @@ if __name__ == '__main__':
     glfw.swap_interval(0) # TODO: buscar por qué
 
     t0 = glfw.get_time()
-    c0 = 0
     t1 = glfw.get_time()
 
     c_pos_sol_y = 20
-    pos_sol_y = c_pos_sol_y
     c_pos_sol_z = 10
-    sol_theta = 3/2 * np.pi 
-
-    # TODO: pos sol y,z en funcion tiempo
+    sol_theta = 1/2 * np.pi 
+    pos_sol_z = c_pos_sol_z * -1 * np.cos(sol_theta)
+    pos_sol_y = c_pos_sol_y * np.sin(sol_theta)
+    # Day and night duration in seconds
     L0 = glfw.get_time()
-    L = 10 # s
-    day_time = L/2
-
+    delta_t = 0.0009 # dt app
+    #n_calls = int(day_night_time/delta_t) # numero de llamadas que se deben hacer para modificar theta
+    day_quart_time = day_night_time/4
+    # d_theta que se tiene que añadir para que en L/4 (s) recorra pi/2
+    delta_theta = (np.pi/2) / (day_quart_time / delta_t) 
     # Application loop
     while not glfw.window_should_close(window):
 
@@ -115,17 +119,15 @@ if __name__ == '__main__':
             # set up the eye, at and up for first camera
             #controller.camera_theta -= dt * 10
             if controller.camera_theta >= -0.9: controller.camera_theta -= dt
-            print(dt)
-            print(controller.camera_theta)
-            
+            #print("dt: ", dt)
             controller.set_up_vectors()
             # sol
-            if pos_sol_y >= -c_pos_sol_y:
-                pos_sol_y -= 2 * dt
-            else:
-                pos_sol_y += 2 * dt
-            sol_theta += dt
-            pos_sol_z = c_pos_sol_z * np.cos(sol_theta)
+            L0 += dt
+            #if L0 >= day_night_time: # pasado los L segundos
+            sol_theta += delta_theta
+            pos_sol_z = c_pos_sol_z * -1 * np.cos(sol_theta)
+            pos_sol_y = c_pos_sol_y * np.sin(sol_theta)
+            #print("pos z, y: ", pos_sol_z, pos_sol_y)
 
         else: 
             dt = 0 # stop the game
@@ -151,7 +153,7 @@ if __name__ == '__main__':
             # Setting up the light variables
             setUpLightsDefault(textureLightShaderProgram)
             # re set up the light position (like it was the sun)
-            glUniform3f(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "lightPosition"), 0, pos_sol_y, pos_sol_z)
+            glUniform3f(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "lightPosition"), flappy_bird.pos_x + 10, pos_sol_y, pos_sol_z)
             
             #glUniform3f(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "viewPosition"), controller.eye[0], controller.eye[1], controller.eye[2])
             glUniformMatrix4fv(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
@@ -174,7 +176,7 @@ if __name__ == '__main__':
         # Setting up the light variables
         setUpLightsDefault(lightShaderProgram)
         # re set up the light position (like it was the sun)
-        glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "lightPosition"), 0, pos_sol_y, pos_sol_z)
+        glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "lightPosition"), flappy_bird.pos_x + 10, pos_sol_y, pos_sol_z)
 
         #glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "viewPosition"), controller.eye[0], controller.eye[1], controller.eye[2])
         glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
