@@ -155,53 +155,42 @@ if __name__ == '__main__':
             glUniformMatrix4fv(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
             # background
             background_final.draw(textureLightShaderProgram)
-            # bird win
-            if(flappy_bird.points == n_tubes): # todo fix this
-                #print("WIN!!!!!")
-                flappy_bird.win = True
-                #draw_image(simpleTextureShaderProgram,1,1,"win")
+            ###########################################################################
+            ##### DRAW THE MODELS
+            # Telling OpenGL to use our shader program
+            glUseProgram(lightShaderProgram.shaderProgram)
+            # Setting up the light variables
+            setUpLightsDefault(lightShaderProgram)
+            # re set up the light position (like it was the sun)
+            glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "lightPosition"), flappy_bird.pos_x + 10, pos_sol_y, pos_sol_z)
+
+            #glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "viewPosition"), controller.eye[0], controller.eye[1], controller.eye[2])
+            glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
+            glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
+            # tubes
+            tubeCreator.draw(lightShaderProgram)
+            # flappy
+            flappy_bird.draw(lightShaderProgram)
+            ###########################################################################
+            #### DRAW THE POINTS
+            # TEXT
+            # Telling OpenGL to use our shader program
+            glUseProgram(textPipeline.shaderProgram)
+            write_text(textPipeline, flappy_bird.points, gpuText3DTexture, 0.4, 0.5, 0)
         else:
             glClearColor(1, 0, 0, 1.0)
-            #draw_image(simpleTextureShaderProgram,1,1,"lose")
+            glUseProgram(textPipeline.shaderProgram)
+            write_text(textPipeline, "You lose :(", gpuText3DTexture, -0.8, 0, 0)
         
-        ###########################################################################
-        ##### DRAW THE MODELS
-        # Telling OpenGL to use our shader program
-        glUseProgram(lightShaderProgram.shaderProgram)
-        # Setting up the light variables
-        setUpLightsDefault(lightShaderProgram)
-        # re set up the light position (like it was the sun)
-        glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "lightPosition"), flappy_bird.pos_x + 10, pos_sol_y, pos_sol_z)
 
-        #glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "viewPosition"), controller.eye[0], controller.eye[1], controller.eye[2])
-        glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
-        glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
-        # tubes
-        tubeCreator.draw(lightShaderProgram)
-        # flappy
-        flappy_bird.draw(lightShaderProgram)
 
         ###########################################################################
-        #### DRAW THE POINTS
-        # TEXT
-        # Telling OpenGL to use our shader program
-        glUseProgram(textPipeline.shaderProgram)
-        headerText = str(flappy_bird.points) # points
-        headerCharSize = 0.2
-        headerShape = tx.textToShape(headerText, headerCharSize, headerCharSize)
-        gpuHeader = es.GPUShape().initBuffers() #gpu
-        textPipeline.setupVAO(gpuHeader) #vao
-        gpuHeader.fillBuffers(headerShape.vertices, headerShape.indices, GL_STATIC_DRAW)
-        gpuHeader.texture = gpuText3DTexture
-        headerTransform = tr.matmul([
-            tr.translate(0.4, 0.5, 0),
-        ])
-
-
-        glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "fontColor"), 0.6,0.1,0.4,1) # purple
-        glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "backColor"), 0,0,0,0) # sin fondo
-        glUniformMatrix4fv(glGetUniformLocation(textPipeline.shaderProgram, "transform"), 1, GL_TRUE, headerTransform)
-        textPipeline.drawCall(gpuHeader)
+        # bird win
+        if(flappy_bird.points == n_tubes):
+            flappy_bird.win = True
+            glUseProgram(textPipeline.shaderProgram)
+            write_text(textPipeline, "You win!", gpuText3DTexture,-0.8, 0, 0)
+        
         
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)

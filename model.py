@@ -1,11 +1,12 @@
 #from OpenGL.GL import GL_STATIC_DRAW, GL_TRUE, GL_REPEAT, GL_NEAREST, GL_CLAMP_TO_EDGE
 # obj from https://www.turbosquid.com/
+from OpenGL.GL import *
 import grafica.transformations as tr
 import grafica.basic_shapes as bs
+import grafica.text_renderer as tx
 import grafica.scene_graph as sg
 import grafica.easy_shaders as es
 import grafica.off_obj_reader as obj
-from OpenGL.GL import *
 
 import numpy as np
 from typing import List
@@ -130,14 +131,12 @@ class FlappyBird(object):
             if((bird_z_inf < (tube_z_inf + alpha_error)) or ((bird_z_sup > (tube_z_sup - alpha_error)))):
                 # bird collide passing throw the tube
                 if((bird_x_near > tube_x_near) and (bird_x_near < tube_x_far)):
-                    print("bird collide passing throw the tube")
                     self.alive = False
                     self.pos_y = -1 + self.size_bird/2 # todo fix this --> que sea mas lento
                     tube_creator.die()
             
                 # bird collide at the begining of the tube
                 elif((bird_x_far > tube_x_near) and (bird_x_far < tube_x_far)):
-                    print("bird collide at the begining of the tube")
                     self.alive = False
                     self.pos_z = -1 + self.size_bird_screen/2 # todo fix this --> que sea mas lento
                     tube_creator.die()
@@ -145,12 +144,9 @@ class FlappyBird(object):
             ##### GOOD ######
             # different height bird and tube
             else:
-                print("different height bird and tube")
                 # bird passing throw the tube (at the end)
                 if((bird_x_near > tube_x_near)):# and (bird_x_near < tube_x_far)):
-                    print("bird passing throw the tube (at the end)")
                     if not tube in self.tubes:
-                        print("hello 2")
                         self.tubes.append(tube)
                         #playsound('success.mp3')
               
@@ -308,12 +304,19 @@ def create_sky(pipeline):
 
     return floor
 
-def create_sky2(pipeline,r=0,g=0,b=0):
-    shapeSky = bs.createColorQuad(0.133, 0.194, 0.205)
-    gpuSky = create_gpu(shapeSky, pipeline)
-    sky = sg.SceneGraphNode("sky")
-    sky.transform = tr.matmul([tr.translate(0, 0, 0.1),tr.uniformScale(20)])
-    sky.childs += [gpuSky]
+def write_text(pipeline, text, gpuText3DTexture, x = 0, y = 0, z = 0):
+    headerText = str(text) # points
+    headerCharSize = 0.15
+    headerShape = tx.textToShape(headerText, headerCharSize, headerCharSize)
+    gpuHeader = create_gpu(headerShape, pipeline)
+    gpuHeader.texture = gpuText3DTexture
+    headerTransform = tr.matmul([
+        tr.translate(x, y, z),
+    ])
 
-    return sky
+    glUniform4f(glGetUniformLocation(pipeline.shaderProgram, "fontColor"), 0.6,0.1,0.4,1) # purple
+    glUniform4f(glGetUniformLocation(pipeline.shaderProgram, "backColor"), 0,0,0,0) # sin fondo
+    glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "transform"), 1, GL_TRUE, headerTransform)
+    pipeline.drawCall(gpuHeader)
+
 
