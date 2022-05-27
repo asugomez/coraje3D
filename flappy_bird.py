@@ -73,8 +73,6 @@ if __name__ == '__main__':
     # create objects
     flappy_bird = FlappyBird(lightShaderProgram)
     tubeCreator = TubeCreator(n_tubes) # le doy el pipeline al momento de añadir un "tube" (create_tube(pipeline))
-    #shape_tube_inf = bs.createColorNormalsCube(0,1,0)
-    #gpu_tube_inf = create_gpu(shape_tube_inf, lightShaderProgram)
 
     controller.set_flappy_bird(flappy_bird)
     controller.set_tube_creator(tubeCreator)
@@ -108,58 +106,39 @@ if __name__ == '__main__':
         # Using GLFW to check for input events
         glfw.poll_events()
 
-        """
-        # Setting up the view transform
-        # for bonus point with mouse
-
-        camX = 10 * np.sin(camera_theta)
-        camY = 10 * np.cos(camera_theta)
-
-        viewPos = np.array([camX, camY, 10])
-
-        view = tr.lookAt(
-            viewPos,
-            np.array([0,0,0]),
-            np.array([0,0,1])
-        )
-        """
-
         # Using the time as the x_0 parameter
         if flappy_bird.alive:
             t1 = glfw.get_time()
-            dx = t1 - c0 # dx distance
             # Getting the time difference from the previous iteration
             dt = t1 - t0
             t0 = t1
-            controller.camera_theta -= dt
             # set up the eye, at and up for first camera
+            #controller.camera_theta -= dt * 10
+            if controller.camera_theta >= -0.9: controller.camera_theta -= dt
+            print(dt)
+            print(controller.camera_theta)
+            
             controller.set_up_vectors()
+            # sol
             if pos_sol_y >= -c_pos_sol_y:
                 pos_sol_y -= 2 * dt
             else:
                 pos_sol_y += 2 * dt
-            sol_theta += 2 * dt
+            sol_theta += dt
             pos_sol_z = c_pos_sol_z * np.cos(sol_theta)
-            # luz siempre:
-            #pos_sol_y = 1
-            #pos_sol_z = c_pos_sol_z
 
         else: 
             dt = 0 # stop the game
 
         # create tubes with a distance between them
-        if(dx > 2):
-            #print("create tube c1: ", ci)
-            tubeCreator.create_tube(lightShaderProgram)
-            c0 = t1
+        tubeCreator.create_tube(lightShaderProgram)
         
         # Clearing the screen in both, color and depth
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         # update position
         flappy_bird.update(dt)
-        tubeCreator.update(dt)
-        background_final.update(dt)
+        
         # check if flappy collide with a tube
         flappy_bird.game_lost(tubeCreator)
         # bird alive
@@ -174,7 +153,7 @@ if __name__ == '__main__':
             # re set up the light position (like it was the sun)
             glUniform3f(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "lightPosition"), 0, pos_sol_y, pos_sol_z)
             
-            glUniform3f(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "viewPosition"), controller.eye[0], controller.eye[1], controller.eye[2])
+            #glUniform3f(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "viewPosition"), controller.eye[0], controller.eye[1], controller.eye[2])
             glUniformMatrix4fv(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
             glUniformMatrix4fv(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
             # background
@@ -183,10 +162,10 @@ if __name__ == '__main__':
             if(flappy_bird.points == n_tubes): # todo fix this
                 #print("WIN!!!!!")
                 flappy_bird.win = True
-                draw_image(simpleTextureShaderProgram,1,1,"win")
+                #draw_image(simpleTextureShaderProgram,1,1,"win")
         else:
             glClearColor(1, 0, 0, 1.0)
-            draw_image(simpleTextureShaderProgram,1,1,"lose")
+            #draw_image(simpleTextureShaderProgram,1,1,"lose")
         
         ###########################################################################
         ##### DRAW THE MODELS
@@ -197,7 +176,7 @@ if __name__ == '__main__':
         # re set up the light position (like it was the sun)
         glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "lightPosition"), 0, pos_sol_y, pos_sol_z)
 
-        glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "viewPosition"), controller.eye[0], controller.eye[1], controller.eye[2])
+        #glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "viewPosition"), controller.eye[0], controller.eye[1], controller.eye[2])
         glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
         glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
         # tubes

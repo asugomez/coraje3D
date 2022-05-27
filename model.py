@@ -29,12 +29,12 @@ MAX_Z = 0.48
 class FlappyBird(object):
     
     def __init__(self, pipeline):
-        self.pos_x = -0.3 # initial position, constant
+        self.pos_x = -0.3 # initial position, changes
         self.pos_y = 0 # initial position, constant
         self.pos_z = 0.2 # changes with gravity and user input
         self.alive = True
-        self.moving = 1 # 0 down, 1 up
         self.size_bird = 0.02
+        self.size_bird_screen = 0.18
         self.tubes = []
         self.win = False
         self.gpu = obj.createOBJShape(pipeline, getImagesPath('courage.obj'), 0.6, 0.3, 0.96)
@@ -76,30 +76,30 @@ class FlappyBird(object):
             if(self.pos_z < (1 - self.size_bird/2)): 
                 dt = 0.35 #* 2
                 self.pos_z += pow(dt,2)
-            self.moving = 1
             
     def move_down(self, dt = 0.02):
         if self.alive:
             if(self.pos_z > (-0.5 + self.size_bird/2)): 
                 #dt *= 4
                 self.pos_z -= dt * 0.5  # lineal  #pow(dt,2)
-            self.moving = 0
+        
 
     def update(self, deltaTime):
+        self.pos_x += deltaTime # move forward (axis x)
         if self.alive:
-            self.move_down(deltaTime)
+            self.move_down(deltaTime) # move on axis z
     
     def game_lost(self, tube_creator):
         """
         update the bird tube list to indicate how many tubes the bird has passed throw
         """
         # bird axis positions
-        bird_x_near = self.pos_x - self.size_bird/2 
-        bird_x_far = self.pos_x + self.size_bird/2
-        bird_y_left = self.pos_y - self.size_bird/2 
-        bird_y_right = self.pos_y + self.size_bird/2 
-        bird_z_inf = self.pos_z - self.size_bird/2
-        bird_z_sup = self.pos_z +self.size_bird/2
+        bird_x_near = self.pos_x - self.size_bird_screen/2 
+        bird_x_far = self.pos_x + self.size_bird_screen/2
+        bird_y_left = self.pos_y - self.size_bird_screen/2 
+        bird_y_right = self.pos_y + self.size_bird_screen/2 
+        bird_z_inf = self.pos_z - self.size_bird_screen/2
+        bird_z_sup = self.pos_z +self.size_bird_screen/2
 
         alpha_error = 0.01
 
@@ -113,7 +113,7 @@ class FlappyBird(object):
         if not ((bird_z_sup < 0.5) and (bird_z_inf > -0.5)):
             #print("ERROR")
             self.alive = False
-            self.pos_z = -0.5 + self.size_bird/2 # todo fix this --> que sea mas lento
+            self.pos_z = -0.5 + self.size_bird_screen/2 # todo fix this --> que sea mas lento
             tube_creator.die()
             return
         
@@ -139,7 +139,7 @@ class FlappyBird(object):
                 elif((bird_x_far > tube_x_near) and (bird_x_far < tube_x_far)):
                     #print("here 2")
                     self.alive = False
-                    self.pos_z = -1 + self.size_bird/2 # todo fix this --> que sea mas lento
+                    self.pos_z = -1 + self.size_bird_screen/2 # todo fix this --> que sea mas lento
                     tube_creator.die()
                     
             ##### GOOD ######
@@ -156,10 +156,10 @@ class FlappyBird(object):
     
 class Tube(object):
 
-    def __init__(self, pipeline):
-        self.pos_x = 15
+    def __init__(self, pipeline, pos_x = 15):
+        self.pos_x = pos_x
         self.width = 0.4
-        self.width_y = 1
+        self.width_y = 0.4
         # create tube with a random dz
         self.height_inf = choice(np.arange(0.3, 0.6, 0.1)) # altura tubo inferior
         min_distance_between_tubes = 0.3 # distancia entre tubos
@@ -202,10 +202,6 @@ class Tube(object):
         sg.drawSceneGraphNode(self.model, pipeline, "model")
         #glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
         #pipeline.drawCall(self.gpu)
-        
-
-    def update(self, dt):
-        self.pos_x -= dt * 7
 
     def clear(self):
         self.model.clear()
@@ -225,7 +221,11 @@ class TubeCreator(object):
     def create_tube(self, pipeline):
         if len(self.tubes) >= self.n_tubes or not self.on: 
             return
-        self.tubes.append(Tube(pipeline)) # todo add a distance between tubes
+        
+        distance_x = 5
+        if len(self.tubes) >= 1:
+            distance_x = self.tubes[len(self.tubes)-1].pos_x + 3
+        self.tubes.append(Tube(pipeline, pos_x = distance_x)) # todo add a distance between tubes
 
     def draw(self, pipeline):
         for tube in self.tubes:
@@ -257,7 +257,7 @@ class Background(object):
 
 
     def draw(self, pipeline):
-        self.model.transform = tr.translate(self.pos_x, 0, 0)
+        self.model.transform = tr.translate(0, 0, 0)
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
         sg.drawSceneGraphNode(self.model, pipeline, "model")
 
