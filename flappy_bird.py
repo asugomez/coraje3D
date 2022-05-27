@@ -59,7 +59,7 @@ if __name__ == '__main__':
     lightShaderProgram = ls.SimplePhongShaderProgram()
     simpleTextureShaderProgram = es.SimpleTextureTransformShaderProgram()
     # A shader programs for text
-    #textPipeline = tx.TextureTextRendererShaderProgram()
+    textPipeline = tx.TextureTextRendererShaderProgram()
 
     # Setting up the clear screen color
     glClearColor(0.133, 0.194, 0.205, 1.0)
@@ -81,10 +81,10 @@ if __name__ == '__main__':
     controller.set_tube_creator(tubeCreator)
 
     ### TEXT
-    # # Creating texture with all characters
-    # textBitsTexture = tx.generateTextBitsTexture()
-    # # Moving texture to GPU memory
-    # gpuText3DTexture = tx.toOpenGLTexture(textBitsTexture)
+    # Creating texture with all characters
+    textBitsTexture = tx.generateTextBitsTexture()
+    # Moving texture to GPU memory
+    gpuText3DTexture = tx.toOpenGLTexture(textBitsTexture)
     
     # glfw will swap buffers as soon as possible
     glfw.swap_interval(0) # TODO: buscar por qué
@@ -100,7 +100,6 @@ if __name__ == '__main__':
     # Day and night duration in seconds
     L0 = glfw.get_time()
     delta_t = 0.0009 # dt app
-    #n_calls = int(day_night_time/delta_t) # numero de llamadas que se deben hacer para modificar theta
     day_quart_time = day_night_time/4
     # d_theta que se tiene que añadir para que en L/4 (s) recorra pi/2
     delta_theta = (np.pi/2) / (day_quart_time / delta_t) 
@@ -117,17 +116,13 @@ if __name__ == '__main__':
             dt = t1 - t0
             t0 = t1
             # set up the eye, at and up for first camera
-            #controller.camera_theta -= dt * 10
             if controller.camera_theta >= -0.9: controller.camera_theta -= dt
-            #print("dt: ", dt)
             controller.set_up_vectors()
-            # sol
+            # sun light
             L0 += dt
-            #if L0 >= day_night_time: # pasado los L segundos
             sol_theta += delta_theta
             pos_sol_z = c_pos_sol_z * -1 * np.cos(sol_theta)
             pos_sol_y = c_pos_sol_y * np.sin(sol_theta)
-            #print("pos z, y: ", pos_sol_z, pos_sol_y)
 
         else: 
             dt = 0 # stop the game
@@ -188,27 +183,25 @@ if __name__ == '__main__':
 
         ###########################################################################
         #### DRAW THE POINTS
-    
-        ### TEXT
-        
+        # TEXT
         # Telling OpenGL to use our shader program
-        # glUseProgram(textPipeline.shaderProgram)
-        # headerText = str(flappy_bird.points) # points
-        # headerCharSize = 0.1
-        # headerShape = tx.textToShape(headerText, headerCharSize, headerCharSize)
-        # gpuHeader = es.GPUShape().initBuffers() #gpu
-        # textPipeline.setupVAO(gpuHeader) #vao
-        # gpuHeader.fillBuffers(headerShape.vertices, headerShape.indices, GL_STATIC_DRAW)
-        # gpuHeader.texture = gpuText3DTexture
-        # headerTransform = tr.matmul([
-        #     tr.translate(-0.05, 0.5, 0),
-        # ])
+        glUseProgram(textPipeline.shaderProgram)
+        headerText = str(flappy_bird.points) # points
+        headerCharSize = 0.2
+        headerShape = tx.textToShape(headerText, headerCharSize, headerCharSize)
+        gpuHeader = es.GPUShape().initBuffers() #gpu
+        textPipeline.setupVAO(gpuHeader) #vao
+        gpuHeader.fillBuffers(headerShape.vertices, headerShape.indices, GL_STATIC_DRAW)
+        gpuHeader.texture = gpuText3DTexture
+        headerTransform = tr.matmul([
+            tr.translate(0.4, 0.5, 0),
+        ])
 
 
-        # glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "fontColor"), 0.3,0.1,0.4,1) # purple
-        # glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "backColor"), 0,0,0,0) # sin fondo
-        # glUniformMatrix4fv(glGetUniformLocation(textPipeline.shaderProgram, "transform"), 1, GL_TRUE, headerTransform)
-        # textPipeline.drawCall(gpuHeader)
+        glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "fontColor"), 0.6,0.1,0.4,1) # purple
+        glUniform4f(glGetUniformLocation(textPipeline.shaderProgram, "backColor"), 0,0,0,0) # sin fondo
+        glUniformMatrix4fv(glGetUniformLocation(textPipeline.shaderProgram, "transform"), 1, GL_TRUE, headerTransform)
+        textPipeline.drawCall(gpuHeader)
         
         # Once the render is done, buffers are swapped, showing only the complete scene.
         glfw.swap_buffers(window)

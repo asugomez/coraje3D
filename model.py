@@ -120,8 +120,8 @@ class FlappyBird(object):
         tubes = tube_creator.tubes
         for i, tube in enumerate(tubes):
             # tubes axis position
-            tube_x_near = tube.pos_x - tube.width/2
-            tube_x_far = tube.pos_x + tube.width/2
+            tube_x_near = tube.pos_x - tube.width_x/2
+            tube_x_far = tube.pos_x + tube.width_x/2
             tube_z_inf = -0.5 + tube.height_inf # punto alto del tubo inf
             tube_z_sup = 0.5 - tube.height_sup # punto bajo del tubo sup
 
@@ -130,14 +130,14 @@ class FlappyBird(object):
             if((bird_z_inf < (tube_z_inf + alpha_error)) or ((bird_z_sup > (tube_z_sup - alpha_error)))):
                 # bird collide passing throw the tube
                 if((bird_x_near > tube_x_near) and (bird_x_near < tube_x_far)):
-                    #print("here 1")
+                    print("bird collide passing throw the tube")
                     self.alive = False
                     self.pos_y = -1 + self.size_bird/2 # todo fix this --> que sea mas lento
                     tube_creator.die()
             
                 # bird collide at the begining of the tube
                 elif((bird_x_far > tube_x_near) and (bird_x_far < tube_x_far)):
-                    #print("here 2")
+                    print("bird collide at the begining of the tube")
                     self.alive = False
                     self.pos_z = -1 + self.size_bird_screen/2 # todo fix this --> que sea mas lento
                     tube_creator.die()
@@ -145,9 +145,12 @@ class FlappyBird(object):
             ##### GOOD ######
             # different height bird and tube
             else:
+                print("different height bird and tube")
                 # bird passing throw the tube (at the end)
-                if((bird_x_near > tube_x_near + tube.width/2) and (bird_x_near < tube_x_near)):
+                if((bird_x_near > tube_x_near)):# and (bird_x_near < tube_x_far)):
+                    print("bird passing throw the tube (at the end)")
                     if not tube in self.tubes:
+                        print("hello 2")
                         self.tubes.append(tube)
                         #playsound('success.mp3')
               
@@ -158,7 +161,7 @@ class Tube(object):
 
     def __init__(self, pipeline, pos_x = 15):
         self.pos_x = pos_x
-        self.width = 0.4
+        self.width_x = 0.4
         self.width_y = 0.4
         # create tube with a random dz
         self.height_inf = choice(np.arange(0.3, 0.6, 0.1)) # altura tubo inferior
@@ -177,7 +180,7 @@ class Tube(object):
         pos_z_inf = -0.5 + self.height_inf/2 
         tube_inf.transform = tr.matmul([
             tr.translate(0, 0, pos_z_inf),
-            tr.scale(self.width, self.width, self.height_inf)
+            tr.scale(self.width_x, self.width_y, self.height_inf)
         ])
         tube_inf.childs += [gpu_tube_inf]
 
@@ -186,7 +189,7 @@ class Tube(object):
         tube_sup.transform = tr.matmul([
             tr.translate(0, 0, pos_z_sup),
             tr.rotationZ(3.14), # rotation 180
-            tr.scale(self.width, self.width, self.height_sup)
+            tr.scale(self.width_x, self.width_y, self.height_sup)
         ])
         tube_sup.childs += [gpu_tube_sup]
 
