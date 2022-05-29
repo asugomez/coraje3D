@@ -110,8 +110,6 @@ if __name__ == '__main__':
         # Using GLFW to check for input events
         glfw.poll_events()
 
-        print(controller.mouseX, controller.mouseY)
-
         # Using the time as the x_0 parameter
         if flappy_bird.alive:
             t1 = glfw.get_time()
