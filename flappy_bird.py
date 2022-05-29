@@ -53,11 +53,12 @@ if __name__ == '__main__':
 
     # Connecting the callback function 'on_key' to handle keyboard events
     glfw.set_key_callback(window, controller.on_key)
+    # Connecting the callback function 'cursor_pos_callback' to handle mouse events
+    glfw.set_cursor_pos_callback(window, controller.cursor_pos_callback)
 
     # Shader program for lights
     textureLightShaderProgram = ls.SimpleTexturePhongShaderProgram()
     lightShaderProgram = ls.SimplePhongShaderProgram()
-    simpleTextureShaderProgram = es.SimpleTextureTransformShaderProgram()
     # A shader programs for text
     textPipeline = tx.TextureTextRendererShaderProgram()
 
@@ -108,6 +109,8 @@ if __name__ == '__main__':
 
         # Using GLFW to check for input events
         glfw.poll_events()
+
+        print(controller.mouseX, controller.mouseY)
 
         # Using the time as the x_0 parameter
         if flappy_bird.alive:

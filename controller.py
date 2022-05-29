@@ -10,6 +10,7 @@ class Controller():
 
 
     def __init__(self, width = 1000, height = 600): # referencia a objetos
+        self.mousePos = (0.0, 0.0) # from -1 to 1
         self.width = width
         self.height = height
         self.flappy_bird = None
@@ -21,7 +22,18 @@ class Controller():
         self.at = np.array([1, 0, 0])   # Hacia dónde ve el jugador
         self.projection = tr.perspective(45, float(self.width)/float(self.height), 0.1, 100)
         self.pos_camera = "THIRD_CAMERA"
-
+    
+    @property
+    def mouseX(self):
+        # Getting the mouse location in opengl coordinates
+        mousePosX = 2 * (self.mousePos[0] - self.width/2) / self.width
+        return mousePosX
+    
+    @property
+    def mouseY(self):
+        # Getting the mouse location in opengl coordinates
+        mousePosY = 2 * (self.height/2 - self.mousePos[1]) / self.height
+        return mousePosY
 
     def set_flappy_bird(self, flappy_bird: 'FlappyBird'):
         self.flappy_bird = flappy_bird
@@ -75,9 +87,24 @@ class Controller():
             self.at = np.array([1, 1, 0])
             self.projection = tr.perspective(80, float(self.width)/float(self.height), 0.1, 100)
 
+        ###########################################################################
+        ## camera at with mouse
+        # third person
+        elif key == glfw.KEY_5 and action == glfw.PRESS:
+            self.pos_camera = "THIRD_CAMERA"
+            self.set_up_vectors()
+            self.at = np.array([self.mouseX, self.mouseY, 0.1])
+            self.projection = tr.perspective(45, float(self.width)/float(self.height), 0.1, 100)
+
+        # first-person camera, what flappy bird sees
+        elif key == glfw.KEY_6 and action == glfw.PRESS:
+            self.pos_camera = "FIRST_CAMERA"
+            self.set_up_vectors()
+            self.at = np.array([self.mouseX + 1, self.mouseY, self.flappy_bird.pos_z + self.camera_theta])
+            self.projection = tr.perspective(100, float(self.width)/float(self.height), 0.1, 100)
+
         else:
             print('Unknown key')
-
 
     def set_up_vectors(self): 
         #self.modify_eye_x() # set up the eye with the bird position on axis x
@@ -97,9 +124,13 @@ class Controller():
         if self.pos_camera == "FIRST_CAMERA":
             eye_x = self.eye[0]
             self.eye = np.array([self.flappy_bird.pos_x, self.flappy_bird.pos_y, self.flappy_bird.pos_z])
-            self.at = np.array([self.flappy_bird.pos_x + 1, 0, self.flappy_bird.pos_z + self.camera_theta])
             self.up = np.array([0, 0, 1])
+            self.at = np.array([self.flappy_bird.pos_x + 1, 0, self.flappy_bird.pos_z + self.camera_theta])
 
     def clear_gpu(self):
         self.flappy_bird.clear
         self.tubes.clear
+
+    def cursor_pos_callback(self, window, x, y):
+        self.mousePos = (x,y)
+    
