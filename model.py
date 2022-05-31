@@ -12,40 +12,32 @@ import numpy as np
 from typing import List
 from random import random, choice
 
-from utils import create_gpu, modify_texture_flappy
+from utils import create_gpu
 from grafica.images_path import getImagesPath
 
 LARGO = 1000
 MIN_Z = -0.4
 MAX_Z = 0.48
 
-##sound
-#from playsound import playsound
-
-# import required module
-# from pydub import AudioSegment
-# from pydub.playback import play
-
-
-class FlappyBird(object):
+class Coraje(object):
     
     def __init__(self, pipeline):
         self.pos_x = -0.3 # initial position, changes
         self.pos_y = 0 # initial position, constant
         self.pos_z = 0.2 # changes with gravity and user input
         self.alive = True
-        self.size_bird = 0.02
-        self.size_bird_screen = 0.02
+        self.size_coraje = 0.02
+        self.size_coraje_screen = 0.02
         self.tubes = []
         self.win = False
         self.gpu = obj.createOBJShape(pipeline, getImagesPath('courage.obj'), 0.6, 0.3, 0.96)
-        model = sg.SceneGraphNode('flappy')
+        model = sg.SceneGraphNode('coraje')
         model.childs += [self.gpu]
         self.model = model
 
     @property 
     def points(self):
-        # the number of tubes the flappy bird passes throw it
+        # the number of tubes the coraje passes throw it
         return len(self.tubes)  
     
     def set_model(self, new_model):
@@ -54,33 +46,33 @@ class FlappyBird(object):
     def draw(self, pipeline):
         # dead
         if not self.alive:
-            flappy_transform = tr.matmul([
+            coraje_transform = tr.matmul([
                     tr.translate(self.pos_x, self.pos_y, self.pos_z), 
                     tr.rotationY(np.pi/2), # acostado
                     tr.rotationZ(np.pi/2),
                     tr.rotationX(np.pi/2),
-                    tr.uniformScale(self.size_bird)
+                    tr.uniformScale(self.size_coraje)
                 ])
         if self.alive:
-            flappy_transform = tr.matmul([
+            coraje_transform = tr.matmul([
                     tr.translate(self.pos_x, self.pos_y, self.pos_z), 
                     tr.rotationZ(np.pi/2),
                     tr.rotationX(np.pi/2),
-                    tr.uniformScale(self.size_bird)
+                    tr.uniformScale(self.size_coraje)
                 ])
-        self.model.transform = flappy_transform
+        self.model.transform = coraje_transform
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
         sg.drawSceneGraphNode(self.model, pipeline, "model")
 
     def move_up(self):
         if self.alive:
-            if(self.pos_z < (1 - self.size_bird/2)): 
+            if(self.pos_z < (1 - self.size_coraje/2)): 
                 dt = 0.35 #* 2
                 self.pos_z += pow(dt,2)
             
     def move_down(self, dt = 0.02):
         if self.alive:
-            if(self.pos_z > (-0.5 + self.size_bird/2)): 
+            if(self.pos_z > (-0.5 + self.size_coraje/2)): 
                 #dt *= 4
                 self.pos_z -= dt * 0.5  # lineal  #pow(dt,2)
         
@@ -92,15 +84,15 @@ class FlappyBird(object):
     
     def game_lost(self, tube_creator):
         """
-        update the bird tube list to indicate how many tubes the bird has passed throw
+        update the coraje tube list to indicate how many tubes the coraje has passed throw
         """
-        # bird axis positions
-        bird_x_near = self.pos_x - self.size_bird_screen/2 
-        bird_x_far = self.pos_x + self.size_bird_screen/2
-        bird_y_left = self.pos_y - self.size_bird_screen/2 
-        bird_y_right = self.pos_y + self.size_bird_screen/2 
-        bird_z_inf = self.pos_z - self.size_bird_screen/2
-        bird_z_sup = self.pos_z +self.size_bird_screen/2
+        # coraje axis positions
+        coraje_x_near = self.pos_x - self.size_coraje_screen/2 
+        coraje_x_far = self.pos_x + self.size_coraje_screen/2
+        coraje_y_left = self.pos_y - self.size_coraje_screen/2 
+        coraje_y_right = self.pos_y + self.size_coraje_screen/2 
+        coraje_z_inf = self.pos_z - self.size_coraje_screen/2
+        coraje_z_sup = self.pos_z +self.size_coraje_screen/2
 
         alpha_error = 0.01
 
@@ -111,10 +103,10 @@ class FlappyBird(object):
             return
 
         # si el pájaro toca techo o suelo
-        if not ((bird_z_sup < 0.5) and (bird_z_inf > -0.5)):
+        if not ((coraje_z_sup < 0.5) and (coraje_z_inf > -0.5)):
             #print("ERROR")
             self.alive = False
-            self.pos_z = -0.5 + self.size_bird_screen/2 # todo fix this --> que sea mas lento
+            self.pos_z = -0.5 + self.size_coraje_screen/2 # todo fix this --> que sea mas lento
             tube_creator.die()
             return
         
@@ -127,25 +119,25 @@ class FlappyBird(object):
             tube_z_sup = 0.5 - tube.height_sup # punto bajo del tubo sup
 
             ##### BAD ######
-            # checking height: bird same height as the tube
-            if((bird_z_inf < (tube_z_inf + alpha_error)) or ((bird_z_sup > (tube_z_sup - alpha_error)))):
-                # bird collide passing throw the tube
-                if((bird_x_near > tube_x_near) and (bird_x_near < tube_x_far)):
+            # checking height: coraje same height as the tube
+            if((coraje_z_inf < (tube_z_inf + alpha_error)) or ((coraje_z_sup > (tube_z_sup - alpha_error)))):
+                # coraje collide passing throw the tube
+                if((coraje_x_near > tube_x_near) and (coraje_x_near < tube_x_far)):
                     self.alive = False
-                    self.pos_y = -1 + self.size_bird/2 # todo fix this --> que sea mas lento
+                    self.pos_y = -1 + self.size_coraje/2 # todo fix this --> que sea mas lento
                     tube_creator.die()
             
-                # bird collide at the begining of the tube
-                elif((bird_x_far > tube_x_near) and (bird_x_far < tube_x_far)):
+                # coraje collide at the begining of the tube
+                elif((coraje_x_far > tube_x_near) and (coraje_x_far < tube_x_far)):
                     self.alive = False
-                    self.pos_z = -1 + self.size_bird_screen/2 # todo fix this --> que sea mas lento
+                    self.pos_z = -1 + self.size_coraje_screen/2 # todo fix this --> que sea mas lento
                     tube_creator.die()
                     
             ##### GOOD ######
-            # different height bird and tube
+            # different height coraje and tube
             else:
-                # bird passing throw the tube (at the end)
-                if((bird_x_near > tube_x_near)):# and (bird_x_near < tube_x_far)):
+                # coraje passing throw the tube (at the end)
+                if((coraje_x_near > tube_x_near)):# and (coraje_x_near < tube_x_far)):
                     if not tube in self.tubes:
                         self.tubes.append(tube)
                         #playsound('success.mp3')
@@ -220,10 +212,9 @@ class TubeCreator(object):
     def create_tube(self, pipeline):
         if len(self.tubes) >= self.n_tubes or not self.on: 
             return
-        
         distance_x = 5
         if len(self.tubes) >= 1:
-            distance_x = self.tubes[len(self.tubes)-1].pos_x + 3
+            distance_x = self.tubes[len(self.tubes)-1].pos_x + choice(np.arange(1.5, 4, 0.8))
         self.tubes.append(Tube(pipeline, pos_x = distance_x)) # todo add a distance between tubes
 
     def draw(self, pipeline):
@@ -243,12 +234,12 @@ class Background(object):
     def __init__(self, pipeline, L = 10):
         self.night = L
         side = create_skybox(pipeline)
-        floor = create_floor(pipeline)
+        #floor = create_floor(pipeline)
         sky = create_sky(pipeline)
 
         background = sg.SceneGraphNode('background')
         background.childs += [side]
-        background.childs += [floor]
+        #background.childs += [floor]
         background.childs += [sky]
 
         self.pos_x = 0
@@ -259,9 +250,6 @@ class Background(object):
         self.model.transform = tr.translate(0, 0, 0)
         glUniformMatrix4fv(glGetUniformLocation(pipeline.shaderProgram, "model"), 1, GL_TRUE, tr.identity())
         sg.drawSceneGraphNode(self.model, pipeline, "model")
-
-    def update(self, dt):
-        self.pos_x -= dt * 0.5
 
 
 

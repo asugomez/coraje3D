@@ -1,8 +1,3 @@
-
-"""
-If it is required to draw 3D over 2D, you may need to clear the depth buffer with
-glClear(GL_DEPTH_BUFFER_BIT)
-"""
 import glfw # GLFW just sets up the window and context
 import sys
 from OpenGL.GL import * #glUseProgram, glClearColor, glEnable, glBlendFunc, glClear, GL_BLEND, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA 
@@ -75,10 +70,10 @@ if __name__ == '__main__':
 
     background_final = Background(textureLightShaderProgram)
     # create objects
-    flappy_bird = FlappyBird(lightShaderProgram)
+    coraje = Coraje(lightShaderProgram)
     tubeCreator = TubeCreator(n_tubes) # le doy el pipeline al momento de añadir un "tube" (create_tube(pipeline))
 
-    controller.set_flappy_bird(flappy_bird)
+    controller.set_coraje(coraje)
     controller.set_tube_creator(tubeCreator)
 
     ### TEXT
@@ -111,7 +106,7 @@ if __name__ == '__main__':
         glfw.poll_events()
 
         # Using the time as the x_0 parameter
-        if flappy_bird.alive:
+        if coraje.alive:
             t1 = glfw.get_time()
             # Getting the time difference from the previous iteration
             dt = t1 - t0
@@ -135,12 +130,12 @@ if __name__ == '__main__':
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         # update position
-        flappy_bird.update(dt)
+        coraje.update(dt)
         
-        # check if flappy collide with a tube
-        flappy_bird.game_lost(tubeCreator)
-        # bird alive
-        if flappy_bird.alive:
+        # check if coraje collide with a tube
+        coraje.game_lost(tubeCreator)
+        # coraje alive
+        if coraje.alive:
             view = tr.lookAt(controller.eye, controller.at, controller.up)
             ###########################################################################
             ##### DRAW THE BACKGROUND
@@ -149,7 +144,7 @@ if __name__ == '__main__':
             # Setting up the light variables
             setUpLightsDefault(textureLightShaderProgram)
             # re set up the light position (like it was the sun)
-            glUniform3f(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "lightPosition"), flappy_bird.pos_x + 10, pos_sol_y, pos_sol_z)
+            glUniform3f(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "lightPosition"), coraje.pos_x + 10, pos_sol_y, pos_sol_z)
             
             #glUniform3f(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "viewPosition"), controller.eye[0], controller.eye[1], controller.eye[2])
             glUniformMatrix4fv(glGetUniformLocation(textureLightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
@@ -162,25 +157,26 @@ if __name__ == '__main__':
             glUseProgram(lightShaderProgram.shaderProgram)
             # Setting up the light variables
             setUpLightsDefault(lightShaderProgram)
+            # different setting for dog and tubes
             glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "Ka"), .2,.2,.2)
             glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "Kd"), 0.7,0.3,0.7)
             glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "Ks"), 0.7,0.3,0.7)
             # re set up the light position (like it was the sun)
-            glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "lightPosition"), flappy_bird.pos_x + 10, pos_sol_y, pos_sol_z)
+            glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "lightPosition"), coraje.pos_x + 10, pos_sol_y, pos_sol_z)
 
             #glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "viewPosition"), controller.eye[0], controller.eye[1], controller.eye[2])
             glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "view"), 1, GL_TRUE, view)
             glUniformMatrix4fv(glGetUniformLocation(lightShaderProgram.shaderProgram, "projection"), 1, GL_TRUE, controller.projection)
             # tubes
             tubeCreator.draw(lightShaderProgram)
-            # flappy
-            flappy_bird.draw(lightShaderProgram)
+            # coraje
+            coraje.draw(lightShaderProgram)
             ###########################################################################
             #### DRAW THE POINTS
             # TEXT
             # Telling OpenGL to use our shader program
             glUseProgram(textPipeline.shaderProgram)
-            gpuHeader = write_text(textPipeline, flappy_bird.points, gpuText3DTexture, 0.4, 0.5, 0)
+            gpuHeader = write_text(textPipeline, coraje.points, gpuText3DTexture, 0.4, 0.5, 0)
         else:
             glClearColor(0.8, 0.2, 0, 1.0)
             glUseProgram(textPipeline.shaderProgram)
@@ -189,9 +185,9 @@ if __name__ == '__main__':
 
 
         ###########################################################################
-        # bird win
-        if(flappy_bird.points == n_tubes):
-            flappy_bird.win = True
+        # coraje win
+        if(coraje.points == n_tubes):
+            coraje.win = True
             glUseProgram(textPipeline.shaderProgram)
             gpuHeader = write_text(textPipeline, "You win!", gpuText3DTexture,-0.8, 0, 0)
         
