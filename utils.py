@@ -61,20 +61,20 @@ def draw_image(pipeline, w, h, name_image):
 def setUpLightsDefault(pipeline):
     # Setting all uniform shader variables 
     # White light in all components: ambient, diffuse and specular.
-    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "La"), 0.6, 0.4, 0.8)
-    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ld"), 1.0, 1.0, 1.0)
-    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ls"), 1.0, 1.0, 1.0)
+    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "La"), 1,1,1)
+    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ld"), 1,1,1 )
+    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ls"), 1,1,1)
 
     # Object is barely visible at only ambient. Bright white for diffuse and specular components.
-    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ka"), 0.4, 0.4, 0.7)
-    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Kd"), 0.8, 0.5, 0.8)
-    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ks"), 0.4,0.4,0.4)
+    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ka"), .02,.02,.02)
+    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Kd"), 0.7,0.3,0.7)
+    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ks"), .2,.2,.2)
     
     glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "lightPosition"), -5, -5, 5)
-    glUniform1ui(glGetUniformLocation(pipeline.shaderProgram, "shininess"), 500)
+    glUniform1ui(glGetUniformLocation(pipeline.shaderProgram, "shininess"), 200)
 
-    glUniform1f(glGetUniformLocation(pipeline.shaderProgram, "constantAttenuation"), 0.0001)
-    glUniform1f(glGetUniformLocation(pipeline.shaderProgram, "linearAttenuation"), 0.03)
+    glUniform1f(glGetUniformLocation(pipeline.shaderProgram, "constantAttenuation"), 0.01)
+    glUniform1f(glGetUniformLocation(pipeline.shaderProgram, "linearAttenuation"), 0.003)
     glUniform1f(glGetUniformLocation(pipeline.shaderProgram, "quadraticAttenuation"), 0.01)
 
   

@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     t0 = glfw.get_time()
     t1 = glfw.get_time()
-
+    # light time
     c_pos_sol_y = 20
     c_pos_sol_z = 10
     sol_theta = 1/2 * np.pi 
@@ -162,6 +162,9 @@ if __name__ == '__main__':
             glUseProgram(lightShaderProgram.shaderProgram)
             # Setting up the light variables
             setUpLightsDefault(lightShaderProgram)
+            glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "Ka"), .2,.2,.2)
+            glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "Kd"), 0.7,0.3,0.7)
+            glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "Ks"), 0.7,0.3,0.7)
             # re set up the light position (like it was the sun)
             glUniform3f(glGetUniformLocation(lightShaderProgram.shaderProgram, "lightPosition"), flappy_bird.pos_x + 10, pos_sol_y, pos_sol_z)
 
