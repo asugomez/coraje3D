@@ -8,3 +8,5 @@
 5. Run:
 ```python view_coraje.py N L```
 6. Play the game !
+
+You can move the camera by pressing 1,2,3,4,5 or 6 :D 
