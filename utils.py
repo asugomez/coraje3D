@@ -31,7 +31,8 @@ def draw_image(pipeline, w, h, name_image):
 def setUpLightsDefault(pipeline):
     # Setting all uniform shader variables 
     # White light in all components: ambient, diffuse and specular.
-    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "La"), 1,1,1)
+    La = 1,1,1
+    glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "La"), *La)
     glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ld"), 1,1,1 )
     glUniform3f(glGetUniformLocation(pipeline.shaderProgram, "Ls"), 1,1,1)
 
